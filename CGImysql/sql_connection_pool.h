@@ -38,13 +38,18 @@ public:
     int GetFreeConn();                   // 获取连接
     void DestroyPool();                  // 销毁连接
 
-    // 单例饿汉模式
+    // 单例懒汉模式
     static connection_pool *GetInstance();
 
     void init(string url, string User, string PassWord, string DatabaseName,
               int Port, unsigned int MaxConn);
 };
 // 自动化管理连接的获取和释放
+/*
+在使用完数据库连接之后，可以通过创建connectionRAII对象来自动释放连接。
+connectionRAII对象是在函数中创建的，所以在离开函数作用域时，
+调用析构函数，释放连接。
+*/
 class connectionRAII
 {
 private:
