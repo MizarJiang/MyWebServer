@@ -56,4 +56,7 @@ public:
     void flush(void);
 };
 
-// #define LOG_DEBUG(format, ...) log::get
+#define LOG_DEBUG(format, ...) log::GetInstance()->write_log(0, format, ##__VA_ARGS__)
+#define LOG_INFO(format, ...) log::GetInstance()->write_log(1, format, ##__VA_ARGS__)
+#define LOG_WARN(format, ...) log::GetInstance()->write_log(2, format, ##__VA_ARGS__)
+#define LOG_ERROR(format, ...) log::GetInstance()->write_log(3, format, ##__VA_ARGS__)
