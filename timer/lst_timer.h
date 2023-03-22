@@ -19,6 +19,7 @@ public:
     util_timer *next;
     time_t expire;
     void (*cb_func)(client_data *);
+    client_data *user_data;
 
 public:
     util_timer() : prev(nullptr), next(nullptr) {}
@@ -119,6 +120,28 @@ public:
     }
     void tick()
     {
+        if (!head)
+            return;
+        LOG_INFO("%s", "Timer tick");
+        log::GetInstance()->flush();
+        time_t cur = time(NULL);
+        util_timer *temp = head;
+        while (temp)
+        {
+            if (cur < temp->expire)
+            {
+                break;
+            }
+            temp->cb_func(temp->user_data);
+            head = temp->next;
+            if (head)
+            {
+                head->prev = nullptr;
+            }
+            delete temp;
+            temp = head;
+        }
+        return;
     }
 
 private:
