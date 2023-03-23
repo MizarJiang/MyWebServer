@@ -111,7 +111,7 @@ bool ThreadPoll<T>::append(T *request)
         return false;
     }
     m_workqueue.push_back(request);
-    m_queueSem.post();
     m_queueLocker.unlock();
+    m_queueSem.post();
     return true;
 }
