@@ -11,14 +11,14 @@ using namespace std;
 class log
 {
 private:
-    char dir_name[128];    // 路径名
-    char log_name[128];    // log文件名
-    int m_split_lines;     // 日志最大行数
-    int m_log_buf_size;    // 日志缓冲区大小
-    long long m_log_count; // 日志行数记录
-    int m_today;           // 记录以天为单位
-    FILE *m_fp;            // 打开log文件的指针
-    char *m_buf;
+    char dir_name[128];               // 路径名
+    char log_name[128];               // log文件名
+    int m_split_lines;                // 日志最大行数
+    int m_log_buf_size;               // 日志缓冲区大小
+    long long m_log_count;            // 日志行数记录
+    int m_today;                      // 记录以天为单位,记录当前时间
+    FILE *m_fp;                       // 打开log文件的指针
+    char *m_buf;                      // 要输出的内容
     block_queue<string> *m_log_queue; // 阻塞队列
     bool m_is_async;                  // 是否异步
     Locker m_mutex;
@@ -26,9 +26,11 @@ private:
 private:
     log();
     virtual ~log();
+    // 异步写日志方法
     void *async_write_log()
     {
         string sigle_log;
+        // 从阻塞队列中取出一条日志内容，写入文件
         while (m_log_queue->pop(sigle_log))
         {
             m_mutex.lock();
