@@ -151,7 +151,7 @@ public:
         }
         m_front = (m_front + 1) % m_max_size;
         item = m_array[m_front];
-        size--;
+        m_size--;
         m_mutex.unlock();
 
         return true;
@@ -176,7 +176,7 @@ public:
 
         m_front = (m_front + 1) % m_max_size;
         item = m_array[m_front];
-        size--;
+        m_size--;
         m_mutex.unlock();
 
         return true;

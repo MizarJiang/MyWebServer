@@ -17,8 +17,8 @@ log::~log()
         fclose(m_fp);
 }
 // 异步需要设置阻塞队列长度，同步不需要设置
-bool log::init(const char *file_name, int log_buf_size = 8192, int split_lines = 5000000,
-               int max_queue_size = 0)
+bool log::init(const char *file_name, int log_buf_size, int split_lines,
+               int max_queue_size)
 {
     // 如果设置了max_queue_size，则使用异步
     if (max_queue_size > 0)
@@ -138,7 +138,9 @@ void log::write_log(int level, const char *format, ...)
                      my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday,
                      my_tm.tm_hour, my_tm.tm_min, my_tm.tm_sec, now.tv_usec, s);
 
+    // bug
     int m = vsnprintf(m_buf + n, m_log_buf_size - 1, format, valist);
+    // int m = vsnprintf(m_buf + n, m_log_buf_size - n - 1, format, valist);
     m_buf[n + m] = '\n';
     m_buf[n + m + 1] = '\0';
     log_str = m_buf;
