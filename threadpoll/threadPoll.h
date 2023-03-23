@@ -1,9 +1,10 @@
 #pragma once
 
 #include <list>
-#include "../lock/locker.h"
 #include <exception>
 #include <iostream>
+#include "../lock/locker.h"
+#include "../CGImysql/sql_connection_pool.h"
 
 template <typename T>
 class ThreadPoll
@@ -15,16 +16,16 @@ private:
     void run();
 
 private:
-    int m_thread_num;           // 线程池中的线程数量
-    int m_max_request;          // 请求队列中允许的最大请求数量
-    pthread_t *m_threads;       // 请求队列的数组，长度为m_thread_num
-    std::list<T *> m_workqueue; // 请求队列
-    Locker m_queueLocker;       // 请求队列互斥锁
-    Sem m_queueSem;             // 请求队列互斥量
-    bool m_stop;                // 是否结束线程
-    // connection_poll *m_connpoll;//数据库
+    int m_thread_num;            // 线程池中的线程数量
+    int m_max_request;           // 请求队列中允许的最大请求数量
+    pthread_t *m_threads;        // 请求队列的数组，长度为m_thread_num
+    std::list<T *> m_workqueue;  // 请求队列
+    Locker m_queueLocker;        // 请求队列互斥锁
+    Sem m_queueSem;              // 请求队列互斥量
+    bool m_stop;                 // 是否结束线程
+    connection_pool *m_connpoll; // 数据库
 public:
-    ThreadPoll(int thread_num = 8, int max_request = 10000);
+    ThreadPoll(connection_pool *connPoll, int thread_num = 8, int max_request = 10000);
     ~ThreadPoll();
     bool append(T *request);
 };
@@ -33,8 +34,8 @@ public:
 需要将 ThreadPoll 构造函数的默认参数移到类模板定义的部分
 */
 template <typename T>
-ThreadPoll<T>::ThreadPoll(int thread_num, int max_request)
-    : m_thread_num(thread_num), m_max_request(max_request), m_stop(false), m_threads(nullptr)
+ThreadPoll<T>::ThreadPoll(connection_pool *connPoll, int thread_num, int max_request)
+    : m_thread_num(thread_num), m_max_request(max_request), m_stop(false), m_threads(nullptr), m_connpoll(connPoll)
 {
     if (m_thread_num <= 0 || m_max_request <= 0)
         throw std::exception();
@@ -86,13 +87,13 @@ void ThreadPoll<T>::run()
         }
         T *request = m_workqueue.front();
         m_workqueue.pop_front();
+        m_queueLocker.unlock();
         if (!request)
         {
             std::cout << "空请求" << std::endl;
-            m_queueLocker.unlock();
             continue;
         }
-        m_queueLocker.unlock();
+        connectionRAII mysqlcon(&request->mysql, m_connpoll);
         // 执行业务逻辑
         request->process();
         delete request;
