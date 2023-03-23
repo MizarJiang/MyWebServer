@@ -61,8 +61,8 @@ ThreadPoll<T>::ThreadPoll(connection_pool *connPoll, int thread_num, int max_req
 template <typename T>
 ThreadPoll<T>::~ThreadPoll()
 {
-    m_stop = true;
     delete[] m_threads;
+    m_stop = true;
 }
 
 template <typename T>
@@ -74,9 +74,26 @@ void *ThreadPoll<T>::worker(void *arg)
 }
 
 template <typename T>
+bool ThreadPoll<T>::append(T *request)
+{
+    m_queueLocker.lock();
+    if (m_workqueue.size() > m_max_request)
+    {
+        m_queueLocker.unlock();
+        return false;
+    }
+    m_workqueue.push_back(request);
+    m_queueLocker.unlock();
+    m_queueSem.post();
+    return true;
+}
+
+template <typename T>
 void ThreadPoll<T>::run()
 {
+    // bug
     while (!m_stop)
+    // while (true)
     {
         m_queueSem.wait();
         m_queueLocker.lock();
@@ -96,22 +113,7 @@ void ThreadPoll<T>::run()
         connectionRAII mysqlcon(&request->mysql, m_connpoll);
         // 执行业务逻辑
         request->process();
-        delete request;
+        // delete request;
     }
     return;
-}
-
-template <typename T>
-bool ThreadPoll<T>::append(T *request)
-{
-    m_queueLocker.lock();
-    if (m_workqueue.size() > m_max_request)
-    {
-        m_queueLocker.unlock();
-        return false;
-    }
-    m_workqueue.push_back(request);
-    m_queueLocker.unlock();
-    m_queueSem.post();
-    return true;
 }
