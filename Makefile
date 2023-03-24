@@ -1,5 +1,5 @@
 CXX = g++
-CFLAGS = -std=c++11 -O2 -Wall -g 
+CFLAGS = -std=c++11 -Wall -g 
 
 TARGET = server
 OBJS = ./CGImysql/*.cpp ./http/*.cpp \
