@@ -22,7 +22,7 @@ public:
     client_data *user_data;
 
 public:
-    util_timer() : prev(nullptr), next(nullptr) {}
+    util_timer() : prev(NULL), next(NULL) {}
 };
 
 class sort_timer_list
@@ -32,7 +32,7 @@ private:
     util_timer *tail;
 
 public:
-    sort_timer_list() : head(nullptr), tail(nullptr) {}
+    sort_timer_list() : head(NULL), tail(NULL) {}
     ~sort_timer_list()
     {
         util_timer *temp = head;
@@ -76,16 +76,15 @@ public:
         if (timer == head)
         {
             head = head->next;
-            head->prev = nullptr;
-            timer->next = nullptr;
+            head->prev = NULL;
+            timer->next = NULL;
             add_timer(timer, head);
         }
         else
         {
             timer->prev->next = timer->next;
             timer->next->prev = timer->prev;
-            timer->next = nullptr;
-            timer->prev = nullptr;
+            add_timer(timer, timer->next);
         }
         return;
     }
@@ -95,21 +94,22 @@ public:
             return;
         if (timer == head && timer == tail)
         {
-            head = nullptr;
-            tail = nullptr;
+            delete timer;
+            head = NULL;
+            tail = NULL;
             return;
         }
         if (timer == head)
         {
             head = head->next;
-            head->prev = nullptr;
+            head->prev = NULL;
             delete timer;
             return;
         }
         if (timer == tail)
         {
             tail = tail->prev;
-            tail->next = nullptr;
+            tail->next = NULL;
             delete timer;
             return;
         }
@@ -136,7 +136,7 @@ public:
             head = temp->next;
             if (head)
             {
-                head->prev = nullptr;
+                head->prev = NULL;
             }
             delete temp;
             temp = head;
@@ -145,7 +145,29 @@ public:
     }
 
 private:
-    void add_timer(util_timer *time, util_timer *list_head)
+    void add_timer(util_timer *timer, util_timer *list_head)
     {
+        util_timer *pre = list_head;
+        util_timer *temp = pre->next;
+        while (temp)
+        {
+            if (timer->expire < temp->expire)
+            {
+                pre->next = timer;
+                timer->next = temp;
+                temp->prev = timer;
+                timer->prev = pre;
+                break;
+            }
+            pre = temp;
+            temp = temp->next;
+        }
+        if (!temp)
+        {
+            pre->next = timer;
+            timer->prev = pre;
+            timer->next = NULL;
+            tail = timer;
+        }
     }
 };
